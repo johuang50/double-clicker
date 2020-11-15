@@ -12,6 +12,9 @@ public class Main implements NativeMouseInputListener, NativeKeyListener {
 
     Robot bot;
     boolean bridgeMode = false;
+    static int clickCounter = 0, lastClickCount;
+    static double cps = 0;
+    static long lastTime = 0;
 
     {
         try {
@@ -27,22 +30,22 @@ public class Main implements NativeMouseInputListener, NativeKeyListener {
 
     public void nativeMousePressed(NativeMouseEvent e) {
         System.out.println("Mouse Pressed: " + e.getButton());
-        if (e.getButton() == 2) {
-            for (int i = 0; i < (bridgeMode ? 2 : 1); i++) {
-                bot.mousePress(InputEvent.BUTTON2_DOWN_MASK);
-//                bot.mouseRelease(InputEvent.BUTTON2_DOWN_MASK);
-                try {
-                    Thread.sleep(30);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
-            }
+        if (e.getButton() == 1) {
+            clickCounter++;
+//            for (int i = 0; i < (bridgeMode ? 3 : 1); i++) {
+//                bot.mousePress(InputEvent.BUTTON2_DOWN_MASK);
+//                try {
+//                    Thread.sleep(50);
+//                } catch (InterruptedException interruptedException) {
+//                    interruptedException.printStackTrace();
+//                }
+//            }
         }
     }
 
     public void nativeMouseReleased(NativeMouseEvent e) {
         if (e.getButton() == 2) {
-            bot.mouseRelease(InputEvent.BUTTON2_DOWN_MASK);
+//            bot.mouseRelease(InputEvent.BUTTON2_DOWN_MASK);
         }
     }
 
@@ -69,6 +72,26 @@ public class Main implements NativeMouseInputListener, NativeKeyListener {
         // Add the appropriate listeners.
         GlobalScreen.addNativeMouseListener(example);
         GlobalScreen.addNativeKeyListener(example);
+
+        (new Thread(new Runnable() {
+            @Override
+            public void run() {
+                lastTime = System.nanoTime();
+                while (true) {
+                    long currTime = System.nanoTime();
+                    long dt = currTime - lastTime;
+                    cps = (clickCounter - lastClickCount) / ((double) dt / 1E9);
+                    System.out.println("CPS: " + cps);
+                    lastTime = currTime;
+                    lastClickCount = clickCounter;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        })).start();
     }
 
     @Override
